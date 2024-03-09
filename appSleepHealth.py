@@ -44,64 +44,63 @@ def show_data(data):
 # ฟังก์ชันทำนายและแสดงผลลัพธ์
 def train_all_models():
     global original_categories, data, ensemble_model
-    
-    original_categories = data['Occupation'].astype('category').cat.categories
-    data['Occupation'] = data['Occupation'].astype('category')
-    data['Occupation'] = data['Occupation'].cat.codes
-    X = data[['Age', 'Sleep Duration', 'Quality of Sleep', 'Physical Activity Level', 'Stress Level']]
-    y = data['Occupation']
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=10)
-    
-    # เทรนโมเดลแต่ละตัว
-    logistic_regression_model = LogisticRegression()
-    naive_bayes_model = GaussianNB()
-    svm_model = SVC()
-    decision_tree_model = DecisionTreeClassifier()
-    random_forest_model = RandomForestClassifier()
-    mlp_model = MLPClassifier()
-    adaboost_model = AdaBoostClassifier()
-    
-    models = [('logistic_regression', logistic_regression_model),
-              ('naive_bayes', naive_bayes_model),
-              ('svm', svm_model),
-              ('decision_tree', decision_tree_model),
-              ('random_forest', random_forest_model),
-              ('mlp', mlp_model),
-              ('adaboost', adaboost_model)]
-    
-    ensemble_model = VotingClassifier(estimators=models, voting='hard')
-    ensemble_model.fit(X_train, y_train)
-    
-    new_data = {
-        'Age': int(entry_Age.get()),
-        'Sleep Duration': float(entry_Sleep_Duration.get()),
-        'Quality of Sleep': int(entry_Quality_of_Sleep.get()),
-        'Physical Activity Level': int(entry_Physical_Activity_Level.get()),
-        'Stress Level': int(entry_Stress_Level.get())
-    }
-    new_data_df = pd.DataFrame([new_data])
-    
-    # ทำนายผล Occupation ด้วยโมเดล Ensemble
-    ensemble_prediction = ensemble_model.predict(new_data_df)
-    
-    predicted_category = pd.Categorical.from_codes(ensemble_prediction.astype(int), categories=original_categories)
-    result_var.set(f'Predicted Occupation: {predicted_category[0]}')
+    try:
+        if ensemble_model is None:
+            original_categories = data['Occupation'].astype('category').cat.categories
+            data['Occupation'] = data['Occupation'].astype('category')
+            data['Occupation'] = data['Occupation'].cat.codes
+            X = data[['Age', 'Sleep Duration', 'Quality of Sleep', 'Physical Activity Level', 'Stress Level']]
+            y = data['Occupation']
+            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=10)
+            
+            logistic_regression_model = LogisticRegression()
+            naive_bayes_model = GaussianNB()
+            svm_model = SVC()
+            decision_tree_model = DecisionTreeClassifier()
+            random_forest_model = RandomForestClassifier()
+            mlp_model = MLPClassifier()
+            adaboost_model = AdaBoostClassifier()
+            
+            models = [('logistic_regression', logistic_regression_model),
+                      ('naive_bayes', naive_bayes_model),
+                      ('svm', svm_model),
+                      ('decision_tree', decision_tree_model),
+                      ('random_forest', random_forest_model),
+                      ('mlp', mlp_model),
+                      ('adaboost', adaboost_model)]
+            
+            ensemble_model = VotingClassifier(estimators=models, voting='hard')
+            ensemble_model.fit(X_train, y_train)
+        else:
+            pass
+        
+        new_data = {
+            'Age': int(entry_Age.get()),
+            'Sleep Duration': float(entry_Sleep_Duration.get()),
+            'Quality of Sleep': int(entry_Quality_of_Sleep.get()),
+            'Physical Activity Level': int(entry_Physical_Activity_Level.get()),
+            'Stress Level': int(entry_Stress_Level.get())
+        }
+        new_data_df = pd.DataFrame([new_data])
+        
+        ensemble_prediction = ensemble_model.predict(new_data_df)
+        
+        predicted_category = pd.Categorical.from_codes(ensemble_prediction.astype(int), categories=original_categories)
+        result_var.set(f'Predicted Occupation: {predicted_category[0]}')
+    except Exception as e:
+        messagebox.showerror("Error", f"An error occurred while predicting: {str(e)}")
 
-# ฟังก์ชันรีเซ็ต Ensemble Model
-def reset_ensemble():
-    global ensemble_model, original_categories
-    ensemble_model = None
-    original_categories = None
 
-# ฟังก์ชันรีเซ็ตข้อมูล Input
 def reset_inputs():
-    entry_Age.delete(0, tk.END)
-    entry_Sleep_Duration.delete(0, tk.END)
-    entry_Quality_of_Sleep.delete(0, tk.END)
-    entry_Physical_Activity_Level.delete(0, tk.END)
-    entry_Stress_Level.delete(0, tk.END)
-    result_var.set("Predicted Occupation: ")
-    reset_ensemble()
+        new_data = {
+            'Age': entry_Age.delete(0, tk.END),
+            'Sleep Duration': entry_Sleep_Duration.delete(0, tk.END),
+            'Quality of Sleep': entry_Quality_of_Sleep.delete(0, tk.END),
+            'Physical Activity Level':  entry_Physical_Activity_Level.delete(0, tk.END),
+            'Stress Level': entry_Stress_Level.delete(0, tk.END),
+            "Predict Occupation" : result_var.set("")
+        }
+
 
 # สร้าง Frame สำหรับ Input
 frm_input = tk.Frame(root, padx=10, pady=10, bg="grey")
